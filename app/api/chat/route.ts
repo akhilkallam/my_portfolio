@@ -94,43 +94,44 @@ interface ChatMessage {
 }
 
 // ─── Twilio SMS helper ────────────────────────────────────────────────────────
-async function sendTwilioSMS(question: string): Promise<void> {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromPhone = process.env.TWILIO_PHONE_NUMBER;
-  const toPhone = process.env.TWILIO_TO_PHONE_NUMBER || "+12016658729";
-
-  if (!accountSid || !authToken || !fromPhone) {
-    console.warn("Twilio env vars not set — skipping SMS");
-    return;
-  }
-
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-  const body = new URLSearchParams({
-    To: toPhone,
-    From: fromPhone,
-    Body: `📬 Portfolio chatbot alert!\n\nSomeone asked a question Akhil's resume doesn't cover:\n\n"${question}"\n\nConsider adding this to your portfolio!`,
-  });
-
-  const credentials = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
-
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: body.toString(),
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("Twilio SMS failed:", err);
-    }
-  } catch (e) {
-    console.error("Twilio request error:", e);
-  }
-}
+// TODO: Uncomment when Twilio credentials are ready
+// async function sendTwilioSMS(question: string): Promise<void> {
+//   const accountSid = process.env.TWILIO_ACCOUNT_SID;
+//   const authToken = process.env.TWILIO_AUTH_TOKEN;
+//   const fromPhone = process.env.TWILIO_PHONE_NUMBER;
+//   const toPhone = process.env.TWILIO_TO_PHONE_NUMBER || "+12016658729";
+//
+//   if (!accountSid || !authToken || !fromPhone) {
+//     console.warn("Twilio env vars not set — skipping SMS");
+//     return;
+//   }
+//
+//   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+//   const body = new URLSearchParams({
+//     To: toPhone,
+//     From: fromPhone,
+//     Body: `📬 Portfolio chatbot alert!\n\nSomeone asked a question Akhil's resume doesn't cover:\n\n"${question}"\n\nConsider adding this to your portfolio!`,
+//   });
+//
+//   const credentials = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+//
+//   try {
+//     const res = await fetch(url, {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Basic ${credentials}`,
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//       body: body.toString(),
+//     });
+//     if (!res.ok) {
+//       const err = await res.text();
+//       console.error("Twilio SMS failed:", err);
+//     }
+//   } catch (e) {
+//     console.error("Twilio request error:", e);
+//   }
+// }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
@@ -191,10 +192,10 @@ export async function POST(req: NextRequest) {
       ? rawText.replace("__UNKNOWN__", "").trim()
       : rawText;
 
-    // Fire SMS asynchronously (don't block the response)
-    if (isUnknown) {
-      sendTwilioSMS(message).catch(console.error);
-    }
+    // TODO: Uncomment when Twilio credentials are ready
+    // if (isUnknown) {
+    //   sendTwilioSMS(message).catch(console.error);
+    // }
 
     return NextResponse.json({ message: cleanText, unknown: isUnknown });
   } catch (err) {
