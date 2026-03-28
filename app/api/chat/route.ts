@@ -176,8 +176,14 @@ export async function POST(req: NextRequest) {
     if (!anthropicRes.ok) {
       const errText = await anthropicRes.text();
       console.error("Anthropic API error:", errText);
+      // Surface the Anthropic error detail to help with debugging
+      let detail = "AI service error";
+      try {
+        const parsed = JSON.parse(errText);
+        detail = parsed?.error?.message || detail;
+      } catch {}
       return NextResponse.json(
-        { error: "AI service error" },
+        { error: "AI service error", detail },
         { status: 502 }
       );
     }
