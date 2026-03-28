@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "API not configured" },
@@ -151,32 +151,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build messages array (history + new user message)
-    const messages: ChatMessage[] = [
-      ...(history || []),
-      { role: "user", content: message },
-    ];
+    // Gemini uses "model" for assistant role; map history accordingly
+    const geminiHistory = (history || []).map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
 
-    // Call Anthropic Messages API directly via fetch
-    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 512,
-        system: SYSTEM_PROMPT,
-        messages,
-      }),
-    });
+    // Call Gemini generateContent API directly via fetch
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: SYSTEM_PROMPT }],
+          },
+          contents: [
+            ...geminiHistory,
+            { role: "user", parts: [{ text: message }] },
+          ],
+          generationConfig: {
+            maxOutputTokens: 512,
+            temperature: 0.2,
+          },
+        }),
+      }
+    );
 
-    if (!anthropicRes.ok) {
-      const errText = await anthropicRes.text();
-      console.error("Anthropic API error:", errText);
-      // Surface the Anthropic error detail to help with debugging
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error("Gemini API error:", errText);
       let detail = "AI service error";
       try {
         const parsed = JSON.parse(errText);
@@ -188,9 +193,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = await anthropicRes.json();
+    const data = await geminiRes.json();
     const rawText: string =
-      data.content?.[0]?.type === "text" ? data.content[0].text : "";
+      data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
     // Detect unknown question signal
     const isUnknown = rawText.startsWith("__UNKNOWN__");

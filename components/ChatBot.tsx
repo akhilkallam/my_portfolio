@@ -150,7 +150,7 @@ export default function ChatBot() {
             <p className="text-slate-100 font-semibold text-sm leading-tight">Akhil's AI Assistant</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-xs text-slate-400">Powered by Claude · Resume-only</p>
+              <p className="text-xs text-slate-400">Powered by Gemini · Resume-only</p>
             </div>
           </div>
           <button
@@ -288,7 +288,7 @@ export default function ChatBot() {
           className="text-center text-xs py-1.5 flex-shrink-0"
           style={{ color: "#334155", background: "#0F172A" }}
         >
-          🔒 Answers from resume only · Unknown questions notify Akhil via SMS
+          🔒 Answers from resume only · Powered by Gemini
         </p>
       </div>
     </>
